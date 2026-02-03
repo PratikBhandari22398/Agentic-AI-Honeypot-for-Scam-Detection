@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic AI Honeypot - Intel Terminal</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body id="main-body">
+  <div class="sidebar" id="sidebar">
+    <div class="logo">
+      <span style="font-size: 2rem;">🛡️</span> Agentic AI
+    </div>
+
+    <div class="stats-container tactical-only">
+      <div class="stat-item">
+        <div class="stat-label">Time Wasted</div>
+        <div class="stat-value" id="stat-time">0s</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Intel Assets</div>
+        <div class="stat-value" id="stat-assets">0</div>
+      </div>
+    </div>
+
+    <div class="persona-selector">
+      <div class="stat-label" style="margin-bottom: 12px;">Active Persona</div>
+      <div class="persona-option active" onclick="setPersona('grandma', this)" id="p-grandma">
+        <span class="persona-name">👵 Elderly Grandma</span>
+        <span class="persona-desc">Slow, polite, Hinglish/Marathi mix.</span>
+      </div>
+      <div class="persona-option" onclick="setPersona('professional', this)" id="p-professional">
+        <span class="persona-name">💼 Busy Professional</span>
+        <span class="persona-desc">Sarcastic, demanding, corporate tone.</span>
+      </div>
+      <div class="persona-option" onclick="setPersona('investigator', this)" id="p-investigator">
+        <span class="persona-name">🕵️ Amateur Investigator</span>
+        <span class="persona-desc">Suspicious, technical, authoritative.</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+      <div class="stat-label" style="margin-bottom: 8px;">Interface Skin</div>
+      <select onchange="setSkin(this.value)"
+        style="background: #0f172a; color: white; width: 100%; padding: 8px; border: 1px solid var(--accent-cyan); border-radius: 4px;">
+        <option value="default">🖥️ Cyber Terminal</option>
+        <option value="whatsapp">📱 WhatsApp Web</option>
+        <option value="telegram">✈️ Telegram Desktop</option>
+      </select>
+    </div>
+
+    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+      <div class="stat-label" style="margin-bottom: 8px;">View Mode</div>
+      <button onclick="toggleSimpleMode()" id="simple-toggle"
+        style="background: var(--threat-none); color: white; width: 100%; padding: 10px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px;">
+        SWITCH TO SIMPLE VIEW
+      </button>
+    </div>
+
+    <button onclick="exportIntel()" class="tactical-only"
+      style="background: var(--bg-dark); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); margin-top: 16px; width: 100%; padding: 12px; cursor: pointer;">
+      Export Intel (JSON)
+    </button>
+    <button onclick="location.reload()"
+      style="background: transparent; color: var(--text-secondary); margin-top: 8px; width: 100%; border: none; font-size: 0.8rem; cursor: pointer;">
+      Reset Session
+    </button>
+  </div>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button class="mobile-btn" onclick="toggleSidebar()" style="margin-right: 10px;">☰ PERSONA</button>
+      <div class="session-info tactical-only">SESSION: <span id="session-id">OFFLINE</span></div>
+      <div id="simple-header" style="display:none; flex-grow: 1;">
+        <div style="display:flex; align-items:center; justify-content:space-between; width: 100%;">
+          <div style="font-size: 1.4rem; font-weight: 800; color: #1e293b;">👵 YOUR SAFETY ASSISTANT</div>
+          <button onclick="toggleSimpleMode()"
+            style="background: #e2e8f0; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; color: #475569;">
+            BACK TO DASHBOARD
+          </button>
+        </div>
+      </div>
+      <div id="threat-indicator"></div>
+      <button class="mobile-btn" onclick="toggleIntel()" style="margin-left: 10px;">🔍 INTEL</button>
+    </div>
+
+    <div id="chat-box" class="chat-area">
+      <div class="message agent">
+        Welcome to your Safety Assistant. Copy and paste any suspicious message here. I will tell you if it's safe or
+        not!
+      </div>
+    </div>
+
+    <div class="input-section">
+      <div class="input-container">
+        <textarea id="msg" rows="2" placeholder="Paste your message here..."></textarea>
+        <button onclick="send()" id="send-btn">CHECK MESSAGE</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="intel-panel tactical-only" id="intel-panel">
+    <div class="intel-header">Extracted Intelligence</div>
+    <div id="intel-feed">
+      <div style="color: var(--text-secondary); font-size: 0.8rem; text-align: center; margin-top: 40px;">
+        No intelligence captured yet.
+      </div>
+    </div>
+
+    <div class="visual-container">
+      <div class="stat-label">Real-time Threat Analysis</div>
+      <div class="threat-graph-wrap">
+        <canvas id="threatChart"></canvas>
+      </div>
+
+      <div class="stat-label" style="margin-top: 20px;">Geographic Trace (Mock)</div>
+      <div class="radar-wrap">
+        <div class="radar-sweep"></div>
+        <div class="radar-grid"></div>
+        <div
+          style="position:absolute; top:40%; left:60%; width:8px; height:8px; background:red; border-radius:50%; box-shadow:0 0 10px red;">
+        </div>
+      </div>
+      <div
+        style="font-size: 0.65rem; color: var(--threat-high); text-align: center; margin-top: 8px; font-weight: bold; font-family: monospace;">
+        TRACE ACTIVE: LAT 18.52 / LON 73.85 (PUNE, IN)
+      </div>
+    </div>
+
+    <button onclick="generateReport()"
+      style="background: var(--threat-high); color: white; margin-top: 24px; width: 100%; padding: 14px; border: none; font-weight: 800; cursor: pointer; border-radius: 8px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);">
+      📄 GENERATE FRAUD REPORT
+    </button>
+  </div>
+
+  <script>
+    let currentPersona = 'grandma';
+    let startTime = null;
+    let timerInterval = null;
+    let intelHistory = [];
+    let isSimpleMode = false;
+    let threatChart = null;
+    let threatLevels = [0.1]; // Initial baseline
+
+    function toggleSimpleMode() {
+      isSimpleMode = !isSimpleMode;
+      const body = document.getElementById('main-body');
+      const toggleBtn = document.getElementById('simple-toggle');
+      const tacElements = document.querySelectorAll('.tactical-only');
+      const simpleHeader = document.getElementById('simple-header');
+      const sidebar = document.getElementById('sidebar');
+      const intelPanel = document.getElementById('intel-panel');
+      const msgInput = document.getElementById('msg');
+      const sendBtn = document.getElementById('send-btn');
+
+      if (isSimpleMode) {
+        body.classList.add('simple-view');
+        sidebar.style.display = 'none';
+        intelPanel.style.display = 'none';
+        simpleHeader.style.display = 'flex';
+        msgInput.placeholder = "Paste the message you received here...";
+        sendBtn.innerText = "CHECK THIS MESSAGE";
+        tacElements.forEach(el => el.style.display = 'none');
+      } else {
+        body.classList.remove('simple-view');
+        sidebar.style.display = 'flex';
+        intelPanel.style.display = 'block';
+        simpleHeader.style.display = 'none';
+        msgInput.placeholder = "Paste suspicious SMS/Email/Chat content here...";
+        sendBtn.innerText = "ANALYZE & ENGAGE";
+        tacElements.forEach(el => el.style.display = 'block');
+      }
+    }
+
+    function setPersona(p, el) {
+      currentPersona = p;
+      document.querySelectorAll('.persona-option').forEach(opt => opt.classList.remove('active'));
+      el.classList.add('active');
+      if (window.innerWidth <= 1024) toggleSidebar(); // Auto close on mobile
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    function toggleIntel() {
+      document.getElementById('intel-panel').classList.toggle('open');
+    }
+
+    function startTimer() {
+      if (startTime) return;
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const timerEl = document.getElementById('stat-time');
+        timerEl.innerText = elapsed + 's';
+
+        // Pulse effect
+        timerEl.classList.add('pulse');
+        setTimeout(() => timerEl.classList.remove('pulse'), 200);
+      }, 1000);
+    }
+
+    async function send() {
+      const messageInput = document.getElementById("msg");
+      const btn = document.getElementById("send-btn");
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      btn.disabled = true;
+      btn.innerText = isSimpleMode ? "CHECKING..." : "ANALYZING...";
+      startTimer();
+
+      try {
+        const res = await fetch("/api/message", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, persona: currentPersona })
+        });
+        const data = await res.json();
+
+        // Update Session & Threat
+        document.getElementById("session-id").innerText = data.session_id;
+        const profile = data.threat_profile;
+
+        let badgeClass = profile.threat_level;
+        let statusText = profile.threat_level.toUpperCase();
+
+        if (isSimpleMode) {
+          statusText = profile.scam_detected ? "❌ DANGEROUS SCAM" : "✅ SAFE TO IGNORE";
+          badgeClass = profile.scam_detected ? "High" : "None";
+        }
+
+        document.getElementById("threat-indicator").innerHTML = `
+                    <span class="badge badge-${badgeClass}">${statusText}</span>
+                `;
+
+        // Update UI Components
+        updateChat(data.conversation_history);
+        if (data.extracted_intelligence) {
+          updateIntel(data.extracted_intelligence);
+          updateChart(data.extracted_intelligence.metadata.threat_score);
+        }
+
+        messageInput.value = "";
+      } catch (e) {
+        console.error(e);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = isSimpleMode ? "CHECK THIS MESSAGE" : "ANALYZE & ENGAGE";
+      }
+    }
+
+    function updateChat(history) {
+      const chatBox = document.getElementById("chat-box");
+      chatBox.innerHTML = "";
+      history.forEach((turn, index) => {
+        const div = document.createElement("div");
+        div.className = turn.sender === "user" ? "message user" : "message agent";
+        div.innerText = turn.message;
+
+        // Add time wasted feedback for agent messages
+        if (turn.sender === "agent" && startTime) {
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          const feedback = document.createElement("span");
+          feedback.className = "system-feedback";
+          feedback.innerText = `[SYSTEM: ${elapsed}s of scammer's time wasted!]`;
+          div.appendChild(feedback);
+        }
+
+        chatBox.appendChild(div);
+      });
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function updateIntel(intel) {
+      const feed = document.getElementById("intel-feed");
+      if (intelHistory.length === 0) feed.innerHTML = "";
+
+      intelHistory.push(intel);
+      document.getElementById('stat-assets').innerText = intelHistory.length;
+
+      const card = document.createElement("div");
+      card.className = "intel-card";
+
+      let html = "";
+      if (intel.payment_anchors.upi_ids.length) {
+        html += `<div class="stat-label">UPI ID</div><div class="intel-value">${intel.payment_anchors.upi_ids.join(", ")}</div>`;
+      }
+      if (intel.digital_footprint.links.length) {
+        html += `<div class="stat-label">MALICIOUS LINK</div><div class="intel-value">${intel.digital_footprint.links.join(", ")}</div>`;
+      }
+      if (intel.digital_footprint.keywords.length) {
+        html += `<div class="stat-label">SUSPICIOUS TERMS</div><div class="intel-value">${[...new Set(intel.digital_footprint.keywords)].join(", ")}</div>`;
+      }
+
+      card.innerHTML = html;
+      feed.prepend(card);
+    }
+
+    function exportIntel() {
+      if (intelHistory.length === 0) return alert("No intel to export.");
+      const blob = new Blob([JSON.stringify(intelHistory, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `fraud-intel-${Date.now()}.json`;
+      a.click();
+    }
+
+    function setSkin(skin) {
+      const body = document.getElementById('main-body');
+      body.classList.remove('skin-whatsapp', 'skin-telegram');
+      if (skin !== 'default') {
+        body.classList.add(`skin-${skin}`);
+      }
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('threatChart').getContext('2d');
+      threatChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Start'],
+          datasets: [{
+            label: 'Threat Intensity',
+            data: threatLevels,
+            borderColor: '#22d3ee',
+            backgroundColor: 'rgba(34, 211, 238, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { display: false, min: 0, max: 1.2 },
+            x: { display: false }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function updateChart(score) {
+      if (!threatChart) initChart();
+      threatLevels.push(score);
+      threatChart.data.labels.push('');
+      threatChart.update();
+    }
+
+    function generateReport() {
+      if (intelHistory.length === 0) return alert("Report cannot be generated without intelligence data.");
+
+      const reportWindow = window.open('', '_blank');
+      let reportContent = `
+        <html>
+        <head>
+          <title>Official Fraud Incident Report</title>
+          <style>
+            body { font-family: sans-serif; padding: 40px; color: #333; }
+            .header { text-align: center; border-bottom: 3px solid #ef4444; padding-bottom: 20px; }
+            .section { margin-top: 30px; border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
+            h1 { color: #ef4444; }
+            .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; }
+            .value { font-family: monospace; font-size: 1.1rem; margin-bottom: 10px; }
+            .footer { margin-top: 50px; font-size: 0.8rem; color: #999; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>🛡️ FRAUD INCIDENT REPORT</h1>
+            <p>Generated by Agentic AI Honeypot System</p>
+            <p>Date: ${new Date().toLocaleString()}</p>
+          </div>
+          
+          <div class="section">
+            <div class="label">Session ID</div>
+            <div class="value">${document.getElementById('session-id').innerText}</div>
+            <div class="label">Time Invested (Wasted)</div>
+            <div class="value">${document.getElementById('stat-time').innerText}</div>
+          </div>
+
+          <div class="section">
+            <h2>Captured Intelligence Assets</h2>
+            ${intelHistory.map(intel => `
+              <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
+                ${intel.payment_anchors.upi_ids.length ? `<div class="label">UPI ID</div><div class="value">${intel.payment_anchors.upi_ids.join(', ')}</div>` : ''}
+                ${intel.digital_footprint.links.length ? `<div class="label">Malicious Link</div><div class="value">${intel.digital_footprint.links.join(', ')}</div>` : ''}
+                ${intel.digital_footprint.keywords.length ? `<div class="label">Threat Keywords</div><div class="value">${intel.digital_footprint.keywords.join(', ')}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="footer">
+            <p>CONFIDENTIAL DOCUMENT - INTEL PROVIDED FOR INVESTIGATION PURPOSES ONLY</p>
+          </div>
+        </body>
+        </html>
+      `;
+      reportWindow.document.write(reportContent);
+      reportWindow.document.close();
+    }
+
+    // Initialize chart on load
+    window.onload = initChart;
+  </script>
+</body>
+
+</html>
