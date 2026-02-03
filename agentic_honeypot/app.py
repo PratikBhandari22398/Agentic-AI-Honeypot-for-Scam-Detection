@@ -15,7 +15,10 @@ def home():
 @app.route("/api/message", methods=["POST"])
 def receive_message():
     data = request.get_json(silent=True) or {}
-    message = data.get("message", "").strip()
+    message = data.get("message", "")
+    if not isinstance(message, str):
+        message = str(message)
+    message = message.strip()
     persona = data.get("persona", "grandma")
 
     # Hackathon Security Requirement: API Key check
