@@ -14,26 +14,31 @@ def home():
 
 @app.route("/api/message", methods=["POST"])
 def receive_message():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     message = data.get("message", "").strip()
     persona = data.get("persona", "grandma")
 
     # Hackathon Security Requirement: API Key check
-    expected_api_key = os.getenv("HONEPOT_API_KEY", "hackathon-secret-key")
-    provided_key = request.headers.get("X-API-Key")
+    expected_api_key = os.getenv("HONEYPOT_API_KEY", "hackathon-secret-key")
+    provided_key = request.headers.get("X-API-Key") or request.headers.get("x-api-key")
 
     if provided_key != expected_api_key:
         return jsonify({"status": "error", "message": "Unauthorized: Invalid API Key"}), 401
 
-    save_message("user", message)
+    if not message:
+        # If the tester is just checking connectivity with an empty message
+        scam = False
+    else:
+        save_message("user", message)
+        scam = is_scam(message)
+    
     history = get_history()
     was_scam_before = any(m['sender'] == 'agent' for m in history)
     
-    scam = is_scam(message)
     reply = ""
     intelligence = {}
 
-    if scam or was_scam_before:
+    if (scam or was_scam_before) and message:
         reply = agent_reply(message, persona_type=persona)
         save_message("agent", reply)
         intelligence = extract_info(message)
