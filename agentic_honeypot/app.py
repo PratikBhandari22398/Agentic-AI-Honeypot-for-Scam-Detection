@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify, render_template
 from detector import is_scam
 from memory import save_message, get_history, reset_history
