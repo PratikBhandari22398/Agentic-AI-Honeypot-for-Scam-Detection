@@ -19,7 +19,7 @@ def receive_message():
     persona = data.get("persona", "grandma")
 
     # Hackathon Security Requirement: API Key check
-    expected_api_key = os.getenv("HONEYPOT_API_KEY", "hackathon-secret-key")
+    expected_api_key = os.getenv("x-api-key", "hackathon-secret-key")
     provided_key = request.headers.get("X-API-Key") or request.headers.get("x-api-key")
 
     if provided_key != expected_api_key:
