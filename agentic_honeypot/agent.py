@@ -87,8 +87,10 @@ def agent_reply(message, persona_type="grandma"):
 
     try:
         response = model.generate_content(prompt)
-        if response.text:
-            return response.text.strip()
+        if response.candidates and len(response.candidates) > 0:
+            candidate = response.candidates[0]
+            if candidate.content.parts:
+                return candidate.content.parts[0].text.strip()
     except Exception as e:
         print(f"Gemini API Error: {e}")
     
