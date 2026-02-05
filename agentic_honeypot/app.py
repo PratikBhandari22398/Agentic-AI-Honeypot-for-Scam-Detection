@@ -15,10 +15,14 @@ def home():
 @app.route("/api/message", methods=["POST"])
 def receive_message():
     data = request.get_json(silent=True) or {}
-    message = data.get("message", "")
-    if not isinstance(message, str):
-        message = str(message)
-    message = message.strip()
+    # Support for both flat and nested message formats (Evaluator sends nested)
+    raw_message = data.get("message", "")
+    if isinstance(raw_message, dict):
+        message = raw_message.get("text", "").strip()
+    else:
+        message = str(raw_message).strip()
+        
+    session_id = data.get("sessionId") or data.get("session_id") or "Honeypot-Agent-X1"
     persona = data.get("persona", "grandma")
 
     # Hackathon Security Requirement: API Key check
@@ -29,7 +33,6 @@ def receive_message():
         return jsonify({"status": "error", "message": "Unauthorized: Invalid API Key"}), 401
 
     if not message:
-        # If the tester is just checking connectivity with an empty message
         scam = False
     else:
         save_message("user", message)
@@ -50,7 +53,9 @@ def receive_message():
     # Professional Intelligence JSON Schema
     history = get_history()
     response = {
-        "session_id": "Honeypot-Agent-X1",
+        "status": "success", # Evaluator requirement
+        "reply": reply,      # Evaluator requirement
+        "session_id": session_id,
         "threat_profile": {
             "scam_detected": scam,
             "threat_level": "High" if scam and intelligence.get("metadata", {}).get("threat_score", 0) >= 0.5 else "Medium" if scam else "None"
@@ -61,7 +66,7 @@ def receive_message():
             "active_engagement": scam
         },
         "extracted_intelligence": intelligence if scam else None,
-        "agent_reply": reply,
+        "agent_reply": reply, # Keep for dashboard compatibility
         "conversation_history": history
     }
 
